@@ -3,16 +3,15 @@ package net.logstash.log4j;
 import junit.framework.Assert;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
-import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.Serializable;
 
 /**
  * Created with IntelliJ IDEA.
@@ -125,7 +124,7 @@ public class JSONEventLayoutV1Test {
         Assert.assertTrue("Event is not valid JSON", JSONValue.isValidJsonStrict(message));
         Object obj = JSONValue.parse(message);
         JSONObject jsonObject = (JSONObject) obj;
-        Assert.assertTrue("Event does not contain field 'field1'" , jsonObject.containsKey("field1"));
+        Assert.assertTrue("Event does not contain field 'field1'", jsonObject.containsKey("field1"));
         Assert.assertEquals("Event does not contain value 'propval1'", "propval1", jsonObject.get("field1"));
 
         layout.setUserFields(prevUserData);
@@ -142,6 +141,24 @@ public class JSONEventLayoutV1Test {
         for (String fieldName : logstashFields) {
             Assert.assertTrue("Event does not contain field: " + fieldName, jsonObject.containsKey(fieldName));
         }
+    }
+
+    @Test
+    public void testMessageObjectRendering() {
+        JSONEventLayoutV1 layout = (JSONEventLayoutV1) appender.getLayout();
+        boolean prevRenderObjectFields = layout.getRenderObjectFields();
+        layout.setRenderObjectFields(true);
+        logger.info(new Serializable() {
+            String test = "TEST";
+            int testNum = 1123;
+        });
+        String message = appender.getMessages()[0];
+        Object obj = JSONValue.parse(message);
+        JSONObject jsonObject = (JSONObject) obj;
+        Assert.assertTrue(jsonObject.containsKey("testNum"));
+        Assert.assertTrue(jsonObject.get("testNum") instanceof Integer);
+        Assert.assertEquals(jsonObject.get("testNum"), 1123);
+        layout.setRenderObjectFields(prevRenderObjectFields);
     }
 
     @Test
