@@ -17,20 +17,11 @@ public class JSONEventLayoutV0 extends Layout {
 
 	private boolean locationInfo = false;
 
-	private String tags;
 	private final boolean ignoreThrowable = false;
 
 	private boolean activeIgnoreThrowable = ignoreThrowable;
 	private final String hostname = new HostData().getHostName();
-	private String threadName;
-	private long timestamp;
-	private String ndc;
-	private Map mdc;
 	private LocationInfo info;
-	private HashMap<String, Object> fieldData;
-	private HashMap<String, Object> exceptionInformation;
-
-	private JSONObject logstashEvent;
 
 	public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 	public static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance(
@@ -62,14 +53,14 @@ public class JSONEventLayoutV0 extends Layout {
 
 	@Override
 	public String format(LoggingEvent loggingEvent) {
-		threadName = loggingEvent.getThreadName();
-		timestamp = loggingEvent.getTimeStamp();
-		fieldData = new HashMap<String, Object>();
-		exceptionInformation = new HashMap<String, Object>();
-		mdc = loggingEvent.getProperties();
-		ndc = loggingEvent.getNDC();
+		String threadName = loggingEvent.getThreadName();
+		long timestamp = loggingEvent.getTimeStamp();
+		HashMap<String, Object> fieldData = new HashMap<String, Object>();
+		HashMap<String, Object> exceptionInformation = new HashMap<String, Object>();
+		Map mdc = loggingEvent.getProperties();
+		String ndc = loggingEvent.getNDC();
 
-		logstashEvent = new JSONObject();
+		JSONObject logstashEvent = new JSONObject();
 
 		logstashEvent.put("@source_host", hostname);
 		logstashEvent.put("@message", loggingEvent.getRenderedMessage());
@@ -88,22 +79,22 @@ public class JSONEventLayoutV0 extends Layout {
 				String stackTrace = StringUtils.join(throwableInformation.getThrowableStrRep(), "\n");
 				exceptionInformation.put("stacktrace", stackTrace);
 			}
-			addFieldData("exception", exceptionInformation);
+			addFieldData("exception", exceptionInformation, fieldData);
 		}
 
 		if (locationInfo) {
 			info = loggingEvent.getLocationInformation();
-			addFieldData("file", info.getFileName());
-			addFieldData("line_number", info.getLineNumber());
-			addFieldData("class", info.getClassName());
-			addFieldData("method", info.getMethodName());
+			addFieldData("file", info.getFileName(), fieldData);
+			addFieldData("line_number", info.getLineNumber(), fieldData);
+			addFieldData("class", info.getClassName(), fieldData);
+			addFieldData("method", info.getMethodName(), fieldData);
 		}
 
-		addFieldData("loggerName", loggingEvent.getLoggerName());
-		addFieldData("mdc", mdc);
-		addFieldData("ndc", ndc);
-		addFieldData("level", loggingEvent.getLevel().toString());
-		addFieldData("threadName", threadName);
+		addFieldData("loggerName", loggingEvent.getLoggerName(), fieldData);
+		addFieldData("mdc", mdc, fieldData);
+		addFieldData("ndc", ndc, fieldData);
+		addFieldData("level", loggingEvent.getLevel().toString(), fieldData);
+		addFieldData("threadName", threadName, fieldData);
 
 		logstashEvent.put("@fields", fieldData);
 		return logstashEvent.toString() + "\n";
@@ -139,7 +130,7 @@ public class JSONEventLayoutV0 extends Layout {
 		activeIgnoreThrowable = ignoreThrowable;
 	}
 
-	private void addFieldData(String keyname, Object keyval) {
+	private void addFieldData(String keyname, Object keyval, HashMap<String, Object> fieldData) {
 		if (null != keyval) {
 			fieldData.put(keyname, keyval);
 		}
