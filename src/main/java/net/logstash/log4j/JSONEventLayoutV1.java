@@ -19,10 +19,10 @@ public class JSONEventLayoutV1 extends Layout {
     private boolean locationInfo = false;
     private String customUserFields;
 
-    private boolean ignoreThrowable = false;
+    private final boolean ignoreThrowable = false;
 
     private boolean activeIgnoreThrowable = ignoreThrowable;
-    private String hostname = new HostData().getHostName();
+    private final String hostname = new HostData().getHostName();
     private String threadName;
     private long timestamp;
     private String ndc;
@@ -59,7 +59,8 @@ public class JSONEventLayoutV1 extends Layout {
         this.locationInfo = locationInfo;
     }
 
-    public String format(LoggingEvent loggingEvent) {
+    @Override
+	public String format(LoggingEvent loggingEvent) {
         threadName = loggingEvent.getThreadName();
         timestamp = loggingEvent.getTimeStamp();
         exceptionInformation = new HashMap<String, Object>();
@@ -137,7 +138,8 @@ public class JSONEventLayoutV1 extends Layout {
         return logstashEvent.toString() + "\n";
     }
 
-    public boolean ignoresThrowable() {
+    @Override
+	public boolean ignoresThrowable() {
         return ignoreThrowable;
     }
 
